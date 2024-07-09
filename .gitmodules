@@ -1,0 +1,3 @@
+[submodule "InfoGrep_BackendSDK"]
+	path = InfoGrep_BackendSDK
+	url = git@github.com:SE-Exort/InfoGrep_BackendSDK.git
