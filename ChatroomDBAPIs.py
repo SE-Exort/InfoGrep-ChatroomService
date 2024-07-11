@@ -39,12 +39,12 @@ class ChatroomDB:
         return;
 
     def getChatrooms(self, user_uuid):
-        self.cursor.execute("SELECT CHATROOM FROM chatroomroles WHERE USERUUID = ?", (str(user_uuid)))
+        self.cursor.execute("SELECT CHATROOM FROM chatroomroles WHERE USERUUID = ?", (str(user_uuid),))
         userroomslist = self.cursor.fetchall();
         return userroomslist
     
     def getMessages(self, chatroom_uuid):
-        self.cursor.execute("SELECT MSGUUID FROM chatroommessages WHERE CHATROOM = ?", (str(chatroom_uuid),))
+        self.cursor.execute("SELECT USERUUID, MSGUUID FROM chatroommessages WHERE CHATROOM = ?", (str(chatroom_uuid),))
         message = self.cursor.fetchall();
         return message
 
@@ -68,9 +68,14 @@ class ChatroomDB:
         self.con.commit();
         return;
 
-    def existsChatroom(self, chatroom_uuid, user_uuid):
+    def userInRoom(self, chatroom_uuid, user_uuid):
         self.cursor.execute("SELECT CHATROOM FROM chatroomroles WHERE CHATROOM = ? AND USERUUID = ?", (str(chatroom_uuid), str(user_uuid)))
         userroom = self.cursor.fetchall();
         if not userroom:
             return False;
         return True;
+
+    def joinRoom(self, chatroom_uuid, user_uuid):
+        self.cursor.execute("INSERT INTO chatroomroles (CHATROOM,USERUUID,USERROLE,PERM1) VALUES(?,?,'OWNER',1)", (str(chatroom_uuid), str(user_uuid)))
+        self.con.commit();
+        return;
