@@ -8,6 +8,7 @@ from authenticate import *;
 from InfoGrep_BackendSDK import parse_api
 from InfoGrep_BackendSDK import authentication_sdk
 from InfoGrep_BackendSDK import fms_api
+from InfoGrep_BackendSDK import ai_sdk
 import ChatroomDBAPIs
 
 import requests
@@ -72,9 +73,17 @@ def get_message(chatroom_uuid, message_uuid, cookie):
 """Enables the user to send a message in a chatroom"""
 @router.post('/message')
 def post_message(chatroom_uuid, message, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+    user_uuid = ''
+    if cookie == 'infogrep-chatbot-summary':
+        user_uuid = '00000000-0000-0000-0000-000000000000'
+    else:
+        user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
     message_uuid = uuid.uuid4();
     chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=message_uuid, message=message);
+
+    #do not generate infogrep-responses to infogrep-responses.
+    if user_uuid !=  '00000000-0000-0000-0000-000000000000':
+        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie)
     return
 
 
