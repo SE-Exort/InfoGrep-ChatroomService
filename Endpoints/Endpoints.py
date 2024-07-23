@@ -61,7 +61,10 @@ def put_room(chatroom_uuid, fields, cookie):
 def get_rooms(cookie):
     user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
     chatroomlist = chatroomdb.getChatrooms(user_uuid)
-    return chatroomlist
+    chatroomjson = {'list': []}
+    for item in chatroomlist:
+        chatroomjson['list'].append({'CHATROOM_UUID': item[0], 'CHATROOM_NAME': item[1]})
+    return chatroomjson
 
 
 """Returns the message associated with a message uuid"""

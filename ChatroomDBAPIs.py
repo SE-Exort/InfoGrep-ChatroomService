@@ -30,7 +30,7 @@ class ChatroomDB:
                                 PRIMARY KEY(MSGUUID))")
         
     def createChatroom(self, chatroom_uuid, user_uuid):
-        self.cursor.execute("INSERT INTO chatroomlist (CHATROOM) VALUES(?);", (str(chatroom_uuid),));
+        self.cursor.execute("INSERT INTO chatroomlist (CHATROOM,NAME) VALUES(?,?);", (str(chatroom_uuid),str("CHATROOMNAME")));
         self.cursor.execute("INSERT INTO chatroomroles (CHATROOM,USERUUID,USERROLE,PERM1) VALUES(?,?,'OWNER',1)", (str(chatroom_uuid), str(user_uuid)))
         self.con.commit();
         return;
@@ -41,7 +41,7 @@ class ChatroomDB:
         return;
 
     def getChatrooms(self, user_uuid):
-        self.cursor.execute("SELECT CHATROOM FROM chatroomroles WHERE USERUUID = ?", (str(user_uuid),))
+        self.cursor.execute("SELECT list.CHATROOM, list.NAME FROM chatroomlist list INNER JOIN chatroomroles roles ON list.CHATROOM = roles.CHATROOM WHERE USERUUID = ?", (str(user_uuid),))
         userroomslist = self.cursor.fetchall();
         return userroomslist
     
