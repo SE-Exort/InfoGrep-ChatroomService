@@ -35,10 +35,10 @@ def post_room(cookie):
 @router.delete('/room')
 def delete_room(chatroom_uuid, cookie):
     user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
-    filelist = fms_api.fms_getFileList(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, cookie=cookie).json()['list']
+    filelist = fms_api.fms_getFileList(chatroom_uuid=chatroom_uuid, cookie=cookie).json()['list']
     for file in filelist:
         print(file['File_UUID'])
-        fms_api.fms_deleteFile(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, file_uuid=file['File_UUID'], cookie=cookie)
+        fms_api.fms_deleteFile(chatroom_uuid=chatroom_uuid, file_uuid=file['File_UUID'], cookie=cookie)
     chatroomdb.deleteChatroom(chatroom_uuid=chatroom_uuid)
     return {"detail": "Chatroom " + chatroom_uuid + " has been deleted"}
 
