@@ -1,4 +1,5 @@
 import sqlite3
+import time
 
 class ChatroomDB:
     def __init__(self):
@@ -21,6 +22,7 @@ class ChatroomDB:
         
         self.cursor.execute("CREATE TABLE IF NOT EXISTS chatroommessages (\
                                 MSGUUID CHAR(37) NOT NULL,\
+                                TIMESTAMP INT NOT NULL,\
                                 CHATROOM CHAR(37) NOT NULL,\
                                 USERUUID CHAR(37) NOT NULL,\
                                 MESSAGE VARCHAR NOT NULL,\
@@ -44,7 +46,7 @@ class ChatroomDB:
         return userroomslist
     
     def getMessages(self, chatroom_uuid):
-        self.cursor.execute("SELECT USERUUID, MSGUUID FROM chatroommessages WHERE CHATROOM = ?", (str(chatroom_uuid),))
+        self.cursor.execute("SELECT USERUUID, TIMESTAMP, MSGUUID FROM chatroommessages WHERE CHATROOM = ?", (str(chatroom_uuid),))
         message = self.cursor.fetchall();
         return message
 
@@ -54,7 +56,8 @@ class ChatroomDB:
         return message
     
     def createMessage(self, chatroom_uuid, user_uuid, message_uuid, message):
-        self.cursor.execute("INSERT INTO chatroommessages (MSGUUID,CHATROOM,USERUUID,MESSAGE) VALUES(?,?,?,?)", (str(message_uuid),str(chatroom_uuid), str(user_uuid),str(message)))
+        timestamp = time.time_ns()
+        self.cursor.execute("INSERT INTO chatroommessages (MSGUUID,TIMESTAMP,CHATROOM,USERUUID,MESSAGE) VALUES(?,?,?,?,?)", (str(message_uuid), timestamp, str(chatroom_uuid), str(user_uuid), str(message)))
         self.con.commit();
         return;
 

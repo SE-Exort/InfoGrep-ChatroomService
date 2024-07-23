@@ -11,8 +11,6 @@ from InfoGrep_BackendSDK import fms_api
 from InfoGrep_BackendSDK import ai_sdk
 import ChatroomDBAPIs
 
-import requests
-
 router = APIRouter(prefix='/api', tags=["api"]);
 chatroomdb = ChatroomDBAPIs.ChatroomDB();
 
@@ -47,7 +45,10 @@ def delete_room(chatroom_uuid, cookie):
 def get_room(chatroom_uuid, cookie):
     user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
     messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
-    return messages
+    messagejson = {'list': []}
+    for item in messages:
+        messagejson['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2]})
+    return messagejson
 
 """Update chatroom name or roles."""
 @router.put('/room')
