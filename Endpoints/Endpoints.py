@@ -1,6 +1,6 @@
 import uuid;
 
-from fastapi import FastAPI, APIRouter;
+from fastapi import FastAPI, APIRouter, Request
 from fastapi import UploadFile;
 from fastapi.responses import FileResponse
 
@@ -16,23 +16,23 @@ chatroomdb = ChatroomDBAPIs.ChatroomDB();
 
 """This endpoint should be the chatroom authentication endpoint. This should validate if a user is in the room"""
 @router.get('/userinroom')
-def get_userinroom(chatroom_uuid, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def get_userinroom(request: Request, chatroom_uuid, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     return {"detail": chatroomdb.userInRoom(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid)};
 
 
 """Creates a chatroom for the user"""
 @router.post('/room')
-def post_room(cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def post_room(request: Request, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroom_uuid = uuid.uuid4();
     chatroomdb.createChatroom(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid)
     return {"detail": chatroom_uuid}
 
 """Deletes the specified chatroom if the user is authorized to do so"""
 @router.delete('/room')
-def delete_room(chatroom_uuid, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def delete_room(request: Request, chatroom_uuid, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     filelist = fms_api.fms_getFileList(chatroom_uuid=chatroom_uuid, cookie=cookie).json()['list']
     for file in filelist:
         print(file['File_UUID'])
@@ -42,8 +42,8 @@ def delete_room(chatroom_uuid, cookie):
 
 """Get all the messge uuids in a chatroom."""
 @router.get('/room')
-def get_room(chatroom_uuid, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def get_room(request: Request, chatroom_uuid, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
     messagejson = {'list': []}
     for item in messages:
@@ -52,14 +52,14 @@ def get_room(chatroom_uuid, cookie):
 
 """Update chatroom name or roles."""
 @router.put('/room')
-def put_room(chatroom_uuid, fields, cookie):
+def put_room(request: Request, chatroom_uuid, fields, cookie):
     raise HTTPException(status_code=501, detail='function not implemented')
 
 
 """Gets all the chatrooms a user is in"""
 @router.get('/rooms')
-def get_rooms(cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def get_rooms(request: Request, cookie):
+    user_uuid = authentication_sdk.User(cookie, request.headers).profile()["user_uuid"]
     chatroomlist = chatroomdb.getChatrooms(user_uuid)
     chatroomjson = {'list': []}
     for item in chatroomlist:
@@ -69,39 +69,39 @@ def get_rooms(cookie):
 
 """Returns the message associated with a message uuid"""
 @router.get('/message')
-def get_message(chatroom_uuid, message_uuid, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def get_message(request: Request, chatroom_uuid, message_uuid, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     message = chatroomdb.getMessage(chatroom_uuid=chatroom_uuid, message_uuid=message_uuid);
     return message
 
 """Enables the user to send a message in a chatroom"""
 @router.post('/message')
-def post_message(chatroom_uuid, message, cookie):
+def post_message(request: Request, chatroom_uuid, message, cookie):
     user_uuid = ''
     if cookie == 'infogrep-chatbot-summary':
         user_uuid = '00000000-0000-0000-0000-000000000000'
     else:
-        user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+        user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     message_uuid = uuid.uuid4();
     chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=message_uuid, message=message);
 
     #do not generate infogrep-responses to infogrep-responses.
     if user_uuid !=  '00000000-0000-0000-0000-000000000000':
-        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie)
+        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers)
     return
 
 
 """Deletes a message in a chatroom"""
 @router.delete('/message')
-def delete_message(chatroom_uuid, message_uuid, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def delete_message(request: Request, chatroom_uuid, message_uuid, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroomdb.deleteMessage(chatroom_uuid=chatroom_uuid, message_uuid=message_uuid);
     return
 
 """Deletes all messages in a chatroom"""
 @router.delete('/messages')
-def delete_messages(chatroom_uuid, cookie):
-    user_uuid = authentication_sdk.User(cookie).profile()["user_uuid"]
+def delete_messages(request: Request, chatroom_uuid, cookie):
+    user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroomdb.deleteMessage(chatroom_uuid=chatroom_uuid);
     return
 
