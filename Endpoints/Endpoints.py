@@ -45,10 +45,10 @@ def delete_room(request: Request, chatroom_uuid, cookie):
 def get_room(request: Request, chatroom_uuid, cookie):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
-    messagejson = {'list': []}
+    result = {'list': []}
     for item in messages:
-        messagejson['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2]})
-    return messagejson
+        result['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2], 'Message': item[3]})
+    return result
 
 """Update chatroom name or roles."""
 @router.put('/room')
@@ -76,19 +76,21 @@ def get_message(request: Request, chatroom_uuid, message_uuid, cookie):
 
 """Enables the user to send a message in a chatroom"""
 @router.post('/message')
-def post_message(request: Request, chatroom_uuid, message, cookie):
+def post_message(request: Request, chatroom_uuid, message, cookie, model):
     user_uuid = ''
     if cookie == 'infogrep-chatbot-summary':
         user_uuid = '00000000-0000-0000-0000-000000000000'
     else:
         user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
-    message_uuid = uuid.uuid4();
-    chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=message_uuid, message=message);
-
-    #do not generate infogrep-responses to infogrep-responses.
+    message_uuid = uuid.uuid4()
+    print('storing in db..')
+    chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=message_uuid, message=message)
+    print('message created')
+    print('user_id', user_uuid)
+    # do not generate infogrep-responses to infogrep-responses.
     if user_uuid !=  '00000000-0000-0000-0000-000000000000':
-        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers)
-    return
+        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers, model=model)
+    return 'OK'
 
 
 """Deletes a message in a chatroom"""
