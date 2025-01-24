@@ -83,14 +83,11 @@ def post_message(request: Request, chatroom_uuid, message, cookie, model):
     else:
         user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     message_uuid = uuid.uuid4()
-    print('storing in db..')
     chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=message_uuid, message=message)
-    print('message created')
-    print('user_id', user_uuid)
     # do not generate infogrep-responses to infogrep-responses.
     if user_uuid !=  '00000000-0000-0000-0000-000000000000':
         ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers, model=model)
-    return 'OK'
+    return
 
 
 """Deletes a message in a chatroom"""
