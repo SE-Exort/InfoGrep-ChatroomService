@@ -5,7 +5,6 @@ from fastapi import UploadFile;
 from fastapi.responses import FileResponse
 
 from authenticate import *;
-from InfoGrep_BackendSDK import parse_api
 from InfoGrep_BackendSDK import authentication_sdk
 from InfoGrep_BackendSDK import fms_api
 from InfoGrep_BackendSDK import ai_sdk
