@@ -29,9 +29,9 @@ class ChatroomDB:
                                 FOREIGN KEY(CHATROOM) REFERENCES chatroomlist(CHATROOM) ON DELETE CASCADE,\
                                 PRIMARY KEY(MSGUUID))")
         
-    def createChatroom(self, chatroom_uuid, user_uuid):
-        self.cursor.execute("INSERT INTO chatroomlist (CHATROOM,NAME) VALUES(?,?);", (str(chatroom_uuid),str("CHATROOMNAME")));
-        self.cursor.execute("INSERT INTO chatroomroles (CHATROOM,USERUUID,USERROLE,PERM1) VALUES(?,?,'OWNER',1)", (str(chatroom_uuid), str(user_uuid)))
+    def createChatroom(self, chatroom_uuid, chatroom_name, user_uuid):
+        self.cursor.execute("INSERT INTO chatroomlist (CHATROOM, NAME) VALUES(?, ?);", (str(chatroom_uuid),str(chatroom_name)));
+        self.joinRoom(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid)
         self.con.commit();
         return;
 
@@ -80,5 +80,10 @@ class ChatroomDB:
 
     def joinRoom(self, chatroom_uuid, user_uuid):
         self.cursor.execute("INSERT INTO chatroomroles (CHATROOM,USERUUID,USERROLE,PERM1) VALUES(?,?,'OWNER',1)", (str(chatroom_uuid), str(user_uuid)))
+        self.con.commit();
+        return;
+
+    def updateRoomName(self, chatroom_uuid, chatroom_name):
+        self.cursor.execute("UPDATE chatroomlist SET NAME = ? WHERE CHATROOM = ?", (str(chatroom_name), str(chatroom_uuid)));
         self.con.commit();
         return;
