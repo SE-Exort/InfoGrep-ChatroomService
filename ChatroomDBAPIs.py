@@ -46,7 +46,7 @@ class ChatroomDB:
         return userroomslist
     
     def getMessages(self, chatroom_uuid):
-        self.cursor.execute("SELECT USERUUID, TIMESTAMP, MSGUUID FROM chatroommessages WHERE CHATROOM = ?", (str(chatroom_uuid),))
+        self.cursor.execute("SELECT USERUUID, TIMESTAMP, MSGUUID, MESSAGE FROM chatroommessages WHERE CHATROOM = ?", (str(chatroom_uuid),))
         message = self.cursor.fetchall();
         return message
 
