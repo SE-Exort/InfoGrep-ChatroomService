@@ -5,6 +5,8 @@ import uvicorn
 import os
 
 from Endpoints.Endpoints import router
+from InfoGrep_BackendSDK.middleware import TracingMiddleware, LoggingMiddleware
+from InfoGrep_BackendSDK.infogrep_logger.logger import Logger
 
 InfoGrepChatroomService = FastAPI();
 
@@ -14,14 +16,8 @@ origins = [
     "*",
 ]
 
-@InfoGrepChatroomService.middleware("http")
-async def add_open_telemetry_headers(request: Request, call_next):
-    response = await call_next(request)
-    for k, v in request.headers.items():
-        if k.startswith("x-") or k.startswith("trace"):
-            response.headers[k] = v
-    return response
-
+InfoGrepChatroomService.add_middleware(LoggingMiddleware, logger=Logger("ChatroomServiceLogger"))
+InfoGrepChatroomService.add_middleware(TracingMiddleware)
 InfoGrepChatroomService.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
