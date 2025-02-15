@@ -20,12 +20,17 @@ def get_userinroom(request: Request, chatroom_uuid, cookie):
     return {"detail": chatroomdb.userInRoom(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid)};
 
 
+def internal_verify_user_in_chatroom(request: Request, chatroom_uuid, cookie):
+    user_in_room = get_userinroom(request=request, chatroom_uuid=chatroom_uuid, cookie=cookie);
+    if user_in_room["detail"] == False:
+         raise HTTPException(status_code= 401, detail="User not in room")
+
 """Creates a chatroom for the user"""
 @router.post('/room')
-def post_room(request: Request, cookie):
+def post_room(request: Request, cookie, chatroom_name="New Chatroom"):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroom_uuid = uuid.uuid4();
-    chatroomdb.createChatroom(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid)
+    chatroomdb.createChatroom(chatroom_uuid=chatroom_uuid, chatroom_name=chatroom_name, user_uuid=user_uuid)
     return {"detail": chatroom_uuid}
 
 """Deletes the specified chatroom if the user is authorized to do so"""
@@ -53,6 +58,12 @@ def get_room(request: Request, chatroom_uuid, cookie):
 @router.put('/room')
 def put_room(request: Request, chatroom_uuid, fields, cookie):
     raise HTTPException(status_code=501, detail='function not implemented')
+
+"""Updates the name for a chatroom"""
+@router.put('/roomname')
+def put_chatroom_name(request: Request, chatroom_uuid, new_name, cookie):
+    internal_verify_user_in_chatroom(request=request, chatroom_uuid=chatroom_uuid, cookie=cookie);
+    chatroomdb.updateRoomName(chatroom_uuid=chatroom_uuid, chatroom_name=new_name);
 
 
 """Gets all the chatrooms a user is in"""
