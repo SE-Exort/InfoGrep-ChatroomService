@@ -13,8 +13,14 @@ class ChatroomDB:
         db_name = os.environ.get("PG_DATABASE_NAME", "postgres")
         DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}"
 
+        keepalive_kwargs = {
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 5,
+            "keepalives_count": 5,
+        }
 
-        self.con = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host, port=db_port);
+        self.con = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host, port=db_port, **keepalive_kwargs);
         
         self.cursor = self.con.cursor();
         self.cursor.execute("CREATE TABLE IF NOT EXISTS chatroomlist (\
