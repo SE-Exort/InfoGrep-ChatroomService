@@ -86,7 +86,7 @@ def get_message(request: Request, chatroom_uuid, message_uuid, cookie):
 
 """Enables the user to send a message in a chatroom"""
 @router.post('/message')
-def post_message(request: Request, chatroom_uuid, message, cookie, model):
+def post_message(request: Request, chatroom_uuid, message, cookie):
     user_uuid = ''
     if cookie == 'infogrep-chatbot-summary':
         user_uuid = '00000000-0000-0000-0000-000000000000'
@@ -96,7 +96,7 @@ def post_message(request: Request, chatroom_uuid, message, cookie, model):
     chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=message_uuid, message=message)
     # do not generate infogrep-responses to infogrep-responses.
     if user_uuid !=  '00000000-0000-0000-0000-000000000000':
-        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers, model=model)
+        ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers, model="None")
     return
 
 
