@@ -111,7 +111,7 @@ def delete_message(request: Request, chatroom_uuid, message_uuid, cookie):
 @router.delete('/messages')
 def delete_messages(request: Request, chatroom_uuid, cookie):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
-    chatroomdb.deleteMessage(chatroom_uuid=chatroom_uuid);
+    chatroomdb.deleteMessages(chatroom_uuid=chatroom_uuid);
     return
 
 
