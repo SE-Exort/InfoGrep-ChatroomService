@@ -2,16 +2,19 @@ from datetime import datetime;
 import psycopg2
 import os
 
+from InfoGrep_BackendSDK.infogrep_logger.logger import Logger
 
 class ChatroomDB:
     def __init__(self):
+        # init logger
+        self.logger = Logger("ChatroomServiceLogger")
+
         # DB config
         db_port = "5432"
         db_host = os.environ.get("PGHOST", "chatroom-service-postgres")
         db_user = os.environ.get("POSTGRES_USERNAME", "postgres")
         db_password = os.environ.get("POSTGRES_PASSWORD", "example")
         db_name = os.environ.get("PG_DATABASE_NAME", "postgres")
-        DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}"
 
         keepalive_kwargs = {
             "keepalives": 1,
@@ -20,7 +23,23 @@ class ChatroomDB:
             "keepalives_count": 5,
         }
 
-        self.con = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host, port=db_port, **keepalive_kwargs);
+        if os.environ.get("PG_VERIFY_CERT") == "true":
+            ca_cert_path = os.environ["PG_CA_CERT_PATH"]
+            client_cert_path = os.environ["PG_TLS_CERT_PATH"]
+            client_key_path = os.environ["PG_TLS_KEY_PATH"]
+            self.con = psycopg2.connect(
+                database=db_name, user=db_user, password=db_password,
+                host=db_host, port=db_port,
+                sslmode='verify-full',
+                sslrootcert=ca_cert_path, 
+                sslcert=client_cert_path, 
+                sslkey=client_key_path, 
+                **keepalive_kwargs
+            )
+            self.logger.info("DB connection established")
+        else:
+            self.con = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host, port=db_port, **keepalive_kwargs);
+            self.logger.info("DB connection established")
         
         self.cursor = self.con.cursor();
         self.cursor.execute("CREATE TABLE IF NOT EXISTS chatroomlist (\
