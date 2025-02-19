@@ -36,7 +36,7 @@ class ChatroomDB:
                 sslkey=client_key_path, 
                 **keepalive_kwargs
             )
-            self.logger.info("DB connection established")
+            self.logger.info("SSL DB connection established")
         else:
             self.con = psycopg2.connect(database=db_name, user=db_user, password=db_password, host=db_host, port=db_port, **keepalive_kwargs);
             self.logger.info("DB connection established")
