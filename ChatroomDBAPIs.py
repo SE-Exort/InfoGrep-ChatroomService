@@ -11,7 +11,7 @@ class ChatroomDB:
 
         # DB config
         db_port = "5432"
-        db_host = os.environ.get("PGHOST", "chatroom-service-postgres")
+        db_host = os.environ.get("PGHOST", "localhost")
         db_user = os.environ.get("POSTGRES_USERNAME", "postgres")
         db_password = os.environ.get("POSTGRES_PASSWORD", "example")
         db_name = os.environ.get("PG_DATABASE_NAME", "postgres")
