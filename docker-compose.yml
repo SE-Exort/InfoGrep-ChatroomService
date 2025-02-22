@@ -10,9 +10,6 @@ services:
       - '8003'
     ports:
       - '8003:8003'
-    depends_on:
-      chatroom-service-postgres:
-        condition: service_healthy
     network_mode: "host"
   # chatroom-service-postgres:
   #   container_name: chatroom-service-postgres
