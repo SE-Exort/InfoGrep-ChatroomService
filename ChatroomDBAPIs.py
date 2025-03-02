@@ -43,33 +43,48 @@ class ChatroomDB:
         
         self.cursor = self.con.cursor();
         self.cursor.execute("CREATE TABLE IF NOT EXISTS chatroomlist (\
-                                CHATROOM CHAR(37) NOT NULL,\
+                                CHATROOM CHAR(36) NOT NULL,\
                                 NAME VARCHAR,\
+                                EMBEDDING_MODEL VARCHAR,\
+                                CHAT_MODEL VARCHAR,\
+                                MODEL_PROVIDER VARCHAR,\
                                 PRIMARY KEY(CHATROOM))")
         
         #table to define what users are in a chatroom and their permissions
         self.cursor.execute("CREATE TABLE IF NOT EXISTS chatroomroles (\
-                                CHATROOM CHAR(37) NOT NULL,\
-                                USERUUID CHAR(37) NOT NULL,\
+                                CHATROOM CHAR(36) NOT NULL,\
+                                USERUUID CHAR(36) NOT NULL,\
                                 USERROLE VARCHAR NOT NULL,\
                                 PERM1 INTEGER NOT NULL,\
                                 FOREIGN KEY(CHATROOM) REFERENCES chatroomlist(CHATROOM) ON DELETE CASCADE,\
                                 PRIMARY KEY(CHATROOM, USERUUID))")
         
         self.cursor.execute("CREATE TABLE IF NOT EXISTS chatroommessages (\
-                                MSGUUID CHAR(37) NOT NULL,\
+                                MSGUUID CHAR(36) NOT NULL,\
                                 TIME timestamp NOT NULL,\
-                                CHATROOM CHAR(37) NOT NULL,\
-                                USERUUID CHAR(37) NOT NULL,\
+                                CHATROOM CHAR(36) NOT NULL,\
+                                USERUUID CHAR(36) NOT NULL,\
                                 MESSAGE VARCHAR NOT NULL,\
                                 FOREIGN KEY(CHATROOM) REFERENCES chatroomlist(CHATROOM) ON DELETE CASCADE,\
                                 PRIMARY KEY(MSGUUID))")
         
-    def createChatroom(self, chatroom_uuid, chatroom_name, user_uuid):
-        self.cursor.execute("INSERT INTO chatroomlist (CHATROOM, NAME) VALUES(%s, %s);", (str(chatroom_uuid),str(chatroom_name)));
+    def createChatroom(self, chatroom_uuid, chatroom_name, embedding_model, chat_model, provider, user_uuid):
+        self.cursor.execute("INSERT INTO chatroomlist (CHATROOM, NAME, EMBEDDING_MODEL, CHAT_MODEL, MODEL_PROVIDER) VALUES(%s, %s, %s, %s, %s);", (str(chatroom_uuid),str(chatroom_name), str(embedding_model), str(chat_model), str(provider)))
         self.joinRoom(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid)
-        self.con.commit();
-        return;
+        self.con.commit()
+        return
+    
+    def getChatroomEmbeddingModel(self, chatroom_uuid):
+        self.cursor.execute("SELECT EMBEDDING_MODEL FROM chatroomlist WHERE CHATROOM = %s", (str(chatroom_uuid),))
+        return self.cursor.fetchone()
+    
+    def getChatroomChatModel(self, chatroom_uuid):
+        self.cursor.execute("SELECT CHAT_MODEL FROM chatroomlist WHERE CHATROOM = %s", (str(chatroom_uuid),))
+        return self.cursor.fetchone()
+    
+    def getChatroomModelProvider(self, chatroom_uuid):
+        self.cursor.execute("SELECT MODEL_PROVIDER FROM chatroomlist WHERE CHATROOM = %s", (str(chatroom_uuid),))
+        return self.cursor.fetchone()
 
     def deleteChatroom(self, chatroom_uuid):
         self.cursor.execute("DELETE FROM chatroomlist WHERE CHATROOM = %s;", (str(chatroom_uuid),));
@@ -77,7 +92,7 @@ class ChatroomDB:
         return;
 
     def getChatrooms(self, user_uuid):
-        self.cursor.execute("SELECT list.CHATROOM, list.NAME FROM chatroomlist list INNER JOIN chatroomroles roles ON list.CHATROOM = roles.CHATROOM WHERE USERUUID = %s", (str(user_uuid),))
+        self.cursor.execute("SELECT list.CHATROOM, list.NAME, list.CHAT_MODEL, list.EMBEDDING_MODEL, list.MODEL_PROVIDER FROM chatroomlist list INNER JOIN chatroomroles roles ON list.CHATROOM = roles.CHATROOM WHERE USERUUID = %s", (str(user_uuid),))
         userroomslist = self.cursor.fetchall();
         return userroomslist
     
