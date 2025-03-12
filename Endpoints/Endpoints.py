@@ -3,6 +3,7 @@ import uuid;
 from fastapi import FastAPI, APIRouter, Request
 from fastapi import UploadFile;
 from fastapi.responses import FileResponse
+from fastapi.openapi.docs import get_swagger_ui_html
 
 from authenticate import *;
 from InfoGrep_BackendSDK import authentication_sdk
@@ -116,3 +117,10 @@ def delete_messages(request: Request, chatroom_uuid, cookie):
 """We need to come up with a way for the user to receive messages that have been sent. 
 We can send messages and get messages that we know the uuid for.
 What we need to do now is a come up with a way to tell clients that a message has been sent."""
+
+@router.get("/docs")
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url="/chatroom/openapi.json",
+        title="Chatroom API Doc"
+    )
