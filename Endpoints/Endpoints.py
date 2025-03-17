@@ -50,7 +50,10 @@ def delete_room(request: Request, chatroom_uuid, cookie):
 def get_room(request: Request, chatroom_uuid, cookie):
     authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
-    result = {'list': []}
+    embedding_model = chatroomdb.getChatroomEmbeddingModel(chatroom_uuid=chatroom_uuid)
+    chat_model = chatroomdb.getChatroomChatModel(chatroom_uuid=chatroom_uuid)
+    provider = chatroomdb.getChatroomModelProvider(chatroom_uuid=chatroom_uuid)
+    result = {'list': [], 'embedding_model': embedding_model, 'chat_model': chat_model, 'provider': provider}
     for item in messages:
         result['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2], 'Message': item[3]})
     return result
