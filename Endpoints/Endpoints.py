@@ -14,6 +14,7 @@ import ChatroomDBAPIs
 router = APIRouter(prefix='/api', tags=["api"]);
 chatroomdb = ChatroomDBAPIs.ChatroomDB();
 
+CHATBOT_UUID = '00000000-0000-0000-0000-000000000000'
 """This endpoint should be the chatroom authentication endpoint. This should validate if a user is in the room"""
 @router.get('/userinroom')
 def get_userinroom(request: Request, chatroom_uuid, cookie):
@@ -97,9 +98,11 @@ def post_message(request: Request, chatroom_uuid, message, cookie):
     embedding_model = chatroomdb.getChatroomEmbeddingModel(chatroom_uuid=chatroom_uuid)
     chat_model = chatroomdb.getChatroomChatModel(chatroom_uuid=chatroom_uuid)
     provider = chatroomdb.getChatroomModelProvider(chatroom_uuid=chatroom_uuid)
-
-    response = ai_sdk.get_Response(chatroom_uuid=chatroom_uuid, message=message, cookie=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, provider=provider)
-    chatroomdb.createMessage(user_uuid='00000000-0000-0000-0000-000000000000', chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=response['data']['response'])
+    messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
+    # Get a response from AI service
+    history = [{'is_user': m[0] != CHATBOT_UUID, 'message': m[3]} for m in messages]
+    response = ai_sdk.get_Response(history=history, chatroom_uuid=chatroom_uuid, message=message, sessionToken=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, provider=provider)
+    chatroomdb.createMessage(user_uuid=CHATBOT_UUID, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=response['data']['response'])
 
 
 """Deletes a message in a chatroom"""

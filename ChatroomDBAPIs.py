@@ -76,15 +76,15 @@ class ChatroomDB:
     
     def getChatroomEmbeddingModel(self, chatroom_uuid):
         self.cursor.execute("SELECT EMBEDDING_MODEL FROM chatroomlist WHERE CHATROOM = %s", (str(chatroom_uuid),))
-        return self.cursor.fetchone()
+        return self.cursor.fetchone()[0]
     
     def getChatroomChatModel(self, chatroom_uuid):
         self.cursor.execute("SELECT CHAT_MODEL FROM chatroomlist WHERE CHATROOM = %s", (str(chatroom_uuid),))
-        return self.cursor.fetchone()
+        return self.cursor.fetchone()[0]
     
     def getChatroomModelProvider(self, chatroom_uuid):
         self.cursor.execute("SELECT MODEL_PROVIDER FROM chatroomlist WHERE CHATROOM = %s", (str(chatroom_uuid),))
-        return self.cursor.fetchone()
+        return self.cursor.fetchone()[0]
 
     def deleteChatroom(self, chatroom_uuid):
         self.cursor.execute("DELETE FROM chatroomlist WHERE CHATROOM = %s;", (str(chatroom_uuid),));
