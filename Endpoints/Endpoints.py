@@ -56,7 +56,7 @@ def get_room(request: Request, chatroom_uuid, cookie):
     provider = chatroomdb.getChatroomModelProvider(chatroom_uuid=chatroom_uuid)
     result = {'list': [], 'embedding_model': embedding_model, 'chat_model': chat_model, 'provider': provider}
     for item in messages:
-        result['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2], 'Message': item[3]})
+        result['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2], 'Message': item[3], 'References': item[4]})
     return result
 
 """Update chatroom name or roles."""
@@ -93,7 +93,7 @@ def get_message(request: Request, chatroom_uuid, message_uuid, cookie):
 @router.post('/message')
 def post_message(request: Request, chatroom_uuid, message, cookie):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
-    chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=message)
+    chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=message, reference='');
     # Fetch chatroom settings
     embedding_model = chatroomdb.getChatroomEmbeddingModel(chatroom_uuid=chatroom_uuid)
     chat_model = chatroomdb.getChatroomChatModel(chatroom_uuid=chatroom_uuid)
@@ -102,7 +102,7 @@ def post_message(request: Request, chatroom_uuid, message, cookie):
     # Get a response from AI service
     history = [{'is_user': m[0] != CHATBOT_UUID, 'message': m[3]} for m in messages]
     response = ai_sdk.get_Response(history=history, chatroom_uuid=chatroom_uuid, message=message, sessionToken=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, provider=provider)
-    chatroomdb.createMessage(user_uuid=CHATBOT_UUID, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=response['data']['response'])
+    chatroomdb.createMessage(user_uuid=CHATBOT_UUID, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=response['data']['response'], reference=response['data']['citations'])
 
 
 """Deletes a message in a chatroom"""
@@ -118,11 +118,6 @@ def delete_messages(request: Request, chatroom_uuid, cookie):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroomdb.deleteMessages(chatroom_uuid=chatroom_uuid);
     return
-
-
-"""We need to come up with a way for the user to receive messages that have been sent. 
-We can send messages and get messages that we know the uuid for.
-What we need to do now is a come up with a way to tell clients that a message has been sent."""
 
 @router.get("/docs")
 async def custom_swagger_ui_html():
