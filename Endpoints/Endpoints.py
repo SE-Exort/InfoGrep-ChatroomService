@@ -29,10 +29,10 @@ def internal_verify_user_in_chatroom(request: Request, chatroom_uuid, cookie):
 
 """Creates a chatroom for the user"""
 @router.post('/room')
-def post_room(request: Request, cookie, embedding_model, chat_model, provider, chatroom_name="New Chatroom"):
+def post_room(request: Request, cookie, embedding_model, chat_model, chat_provider, embedding_provider, chatroom_name="New Chatroom"):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroom_uuid = uuid.uuid4()
-    chatroomdb.createChatroom(chatroom_uuid=chatroom_uuid, chatroom_name=chatroom_name, user_uuid=user_uuid, embedding_model=embedding_model, chat_model=chat_model, provider=provider)
+    chatroomdb.createChatroom(chatroom_uuid=chatroom_uuid, chatroom_name=chatroom_name, user_uuid=user_uuid, embedding_model=embedding_model, chat_model=chat_model, chat_provider=chat_provider, embedding_provider=embedding_provider)
     return {"id": chatroom_uuid, "name": chatroom_name}
 
 """Deletes the specified chatroom if the user is authorized to do so"""
@@ -53,8 +53,8 @@ def get_room(request: Request, chatroom_uuid, cookie):
     messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
     embedding_model = chatroomdb.getChatroomEmbeddingModel(chatroom_uuid=chatroom_uuid)
     chat_model = chatroomdb.getChatroomChatModel(chatroom_uuid=chatroom_uuid)
-    provider = chatroomdb.getChatroomModelProvider(chatroom_uuid=chatroom_uuid)
-    result = {'list': [], 'embedding_model': embedding_model, 'chat_model': chat_model, 'provider': provider}
+    chat_provider, embedding_provider = chatroomdb.getChatProvider(chatroom_uuid), chatroomdb.getEmbeddingProvider(chatroom_uuid)
+    result = {'list': [], 'embedding_model': embedding_model, 'chat_model': chat_model, 'chat_provider': chat_provider, 'embedding_provider': embedding_provider}
     for item in messages:
         result['list'].append({'User_UUID': item[0], 'TimeStamp': item[1], 'Message_UUID': item[2], 'Message': item[3], 'References': item[4]})
     return result
@@ -70,10 +70,11 @@ def put_chatroom_name(request: Request, chatroom_uuid, new_name, cookie):
     internal_verify_user_in_chatroom(request=request, chatroom_uuid=chatroom_uuid, cookie=cookie);
     chatroomdb.updateRoomName(chatroom_uuid=chatroom_uuid, chatroom_name=new_name);
 
+# Only chat provider and model can be updated
 @router.put('/roommodel')
-def change_chatroom_llm(request: Request, chatroom_uuid, new_model_provider, new_model, cookie):
+def change_chatroom_llm(request: Request, chatroom_uuid, chat_provider, chat_model, cookie):
     internal_verify_user_in_chatroom(request=request, chatroom_uuid=chatroom_uuid, cookie=cookie);
-    chatroomdb.updateLLM(chatroom_uuid=chatroom_uuid, chatroom_model=new_model, model_provider=new_model_provider);
+    chatroomdb.updateLLM(chatroom_uuid=chatroom_uuid, chatroom_model=chat_model, model_provider=chat_provider);
 
 """Gets all the chatrooms a user is in"""
 @router.get('/rooms')
@@ -98,14 +99,16 @@ def get_message(request: Request, chatroom_uuid, message_uuid, cookie):
 def post_message(request: Request, chatroom_uuid, message, cookie):
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
     chatroomdb.createMessage(user_uuid=user_uuid, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=message, reference='');
+    
     # Fetch chatroom settings
-    embedding_model = chatroomdb.getChatroomEmbeddingModel(chatroom_uuid=chatroom_uuid)
-    chat_model = chatroomdb.getChatroomChatModel(chatroom_uuid=chatroom_uuid)
-    provider = chatroomdb.getChatroomModelProvider(chatroom_uuid=chatroom_uuid)
-    messages = chatroomdb.getMessages(chatroom_uuid=chatroom_uuid)
-    # Get a response from AI service
+    embedding_model = chatroomdb.getChatroomEmbeddingModel(chatroom_uuid)
+    chat_model = chatroomdb.getChatroomChatModel(chatroom_uuid)
+    chat_provider, embedding_provider = chatroomdb.getChatProvider(chatroom_uuid), chatroomdb.getEmbeddingProvider(chatroom_uuid)
+    messages = chatroomdb.getMessages(chatroom_uuid)
+    
+    # Get a response from AI service and store
     history = [{'is_user': m[0] != CHATBOT_UUID, 'message': m[3]} for m in messages]
-    response = ai_sdk.get_Response(history=history, chatroom_uuid=chatroom_uuid, message=message, sessionToken=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, provider=provider)
+    response = ai_sdk.get_Response(history=history, chatroom_uuid=chatroom_uuid, message=message, sessionToken=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, chat_provider=chat_provider, embedding_provider=embedding_provider)
     chatroomdb.createMessage(user_uuid=CHATBOT_UUID, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=response['data']['response'], reference=response['data']['citations'])
 
 
