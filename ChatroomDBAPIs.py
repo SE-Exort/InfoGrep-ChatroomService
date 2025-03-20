@@ -65,7 +65,7 @@ class ChatroomDB:
                                 CHATROOM CHAR(36) NOT NULL,\
                                 USERUUID CHAR(36) NOT NULL,\
                                 MESSAGE VARCHAR NOT NULL,\
-                                REFERENCES TEXT, \
+                                REFERENCE TEXT,\
                                 FOREIGN KEY(CHATROOM) REFERENCES chatroomlist(CHATROOM) ON DELETE CASCADE,\
                                 PRIMARY KEY(MSGUUID))")
         
@@ -98,7 +98,7 @@ class ChatroomDB:
         return userroomslist
     
     def getMessages(self, chatroom_uuid):
-        self.cursor.execute("SELECT USERUUID, TIME, MSGUUID, MESSAGE, REFERENCES FROM chatroommessages WHERE CHATROOM = %s", (str(chatroom_uuid),))
+        self.cursor.execute("SELECT USERUUID, TIME, MSGUUID, MESSAGE, REFERENCE FROM chatroommessages WHERE CHATROOM = %s", (str(chatroom_uuid),))
         message = self.cursor.fetchall();
         return message
 
