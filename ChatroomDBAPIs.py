@@ -138,3 +138,8 @@ class ChatroomDB:
         self.cursor.execute("UPDATE chatroomlist SET NAME = %s WHERE CHATROOM = %s", (str(chatroom_name), str(chatroom_uuid)));
         self.con.commit();
         return;
+
+    def updateLLM(self, chatroom_uuid, chatroom_model, model_provider):
+        self.cursor.execute("UPDATE chatroomlist SET CHAT_MODEL = %s, MODEL_PROVIDER = %s WHERE CHATROOM = %s", (str(chatroom_model), str(model_provider), str(chatroom_uuid)));
+        self.con.commit();
+        return;

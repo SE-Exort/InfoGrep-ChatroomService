@@ -70,6 +70,10 @@ def put_chatroom_name(request: Request, chatroom_uuid, new_name, cookie):
     internal_verify_user_in_chatroom(request=request, chatroom_uuid=chatroom_uuid, cookie=cookie);
     chatroomdb.updateRoomName(chatroom_uuid=chatroom_uuid, chatroom_name=new_name);
 
+@router.put('/roommodel')
+def change_chatroom_llm(request: Request, chatroom_uuid, new_model_provider, new_model, cookie):
+    internal_verify_user_in_chatroom(request=request, chatroom_uuid=chatroom_uuid, cookie=cookie);
+    chatroomdb.updateLLM(chatroom_uuid=chatroom_uuid, chatroom_model=new_model, model_provider=new_model_provider);
 
 """Gets all the chatrooms a user is in"""
 @router.get('/rooms')
