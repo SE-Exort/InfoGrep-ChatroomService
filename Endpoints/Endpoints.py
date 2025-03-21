@@ -108,7 +108,7 @@ def post_message(request: Request, chatroom_uuid, message, cookie):
     
     # Get a response from AI service and store
     history = [{'is_user': m[0] != CHATBOT_UUID, 'message': m[3]} for m in messages]
-    response = ai_sdk.get_Response(history=history, chatroom_uuid=chatroom_uuid, message=message, sessionToken=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, chat_provider=chat_provider, embedding_provider=embedding_provider)
+    response = ai_sdk.get_Response(history=history, chatroom_uuid=chatroom_uuid, sessionToken=cookie, headers=request.headers, embedding_model=embedding_model, chat_model=chat_model, chat_provider=chat_provider, embedding_provider=embedding_provider)
     chatroomdb.createMessage(user_uuid=CHATBOT_UUID, chatroom_uuid=chatroom_uuid, message_uuid=uuid.uuid4(), message=response['data']['response'], reference=response['data']['citations'])
 
 
