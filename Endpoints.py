@@ -1,12 +1,11 @@
 import uuid
 
-from fastapi import FastAPI, APIRouter, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Request
 from fastapi import UploadFile
 from fastapi.params import Depends
 from fastapi.responses import FileResponse
 from fastapi.openapi.docs import get_swagger_ui_html
 
-from authenticate import *
 from InfoGrep_BackendSDK import authentication_sdk
 from InfoGrep_BackendSDK import fms_api
 from InfoGrep_BackendSDK import ai_sdk
@@ -67,7 +66,7 @@ def delete_room(request: Request, chatroom_uuid, cookie, db: Session = Depends(g
 def get_room(request: Request, chatroom_uuid, cookie, db: Session = Depends(get_db)):
     ensure_user_in_chatroom(request, chatroom_uuid, cookie, db)
     chatroom = db.query(Chatrooms).where(Chatrooms.id==chatroom_uuid).one()
-    chatroom_messages = db.query(ChatroomMessages).where(Chatrooms.id==chatroom_uuid).all()
+    chatroom_messages = db.query(ChatroomMessages).where(ChatroomMessages.chatroom_uuid==chatroom.id).all()
     return {'list': chatroom_messages, 'embedding_model': chatroom.embedding_model, 'embedding_provider': chatroom.embedding_provider, 'chat_model': chatroom.chat_model, 'chat_provider': chatroom.chat_provider}
 
 """Update chatroom name or roles."""
@@ -121,7 +120,7 @@ def post_message(request: Request, chatroom_uuid, cookie, message, db: Session =
                                    chat_model=c.chat_model,
                                    chat_provider=c.chat_provider,
                                    embedding_provider=c.embedding_provider)
-    db.add(ChatroomMessages(chatroom_uuid=chatroom_uuid, user_uuid=CHATBOT_UUID, message=response['data']['response'], citations=response['data']['citations']))
+    db.add(ChatroomMessages(chatroom_uuid=chatroom_uuid, user_uuid=CHATBOT_UUID, message=response['data']['response'], references=response['data']['citations']))
     db.commit()
 
 """Deletes a message in a chatroom"""
