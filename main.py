@@ -4,11 +4,11 @@ import uvicorn
 
 import os
 
-from Endpoints.Endpoints import router
+from Endpoints import router
 from InfoGrep_BackendSDK.middleware import TracingMiddleware, LoggingMiddleware
 from InfoGrep_BackendSDK.infogrep_logger.logger import Logger
 
-InfoGrepChatroomService = FastAPI();
+InfoGrepChatroomService = FastAPI()
 
 os.environ["no_proxy"]="*"
 os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
