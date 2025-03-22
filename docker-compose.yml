@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - ./src:/usr/src/app
     container_name: chatroom-service
     expose:
       - '8003'
