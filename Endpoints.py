@@ -18,7 +18,7 @@ router = APIRouter(prefix='/api', tags=["api"])
 CHATBOT_UUID = '00000000-0000-0000-0000-000000000000'
 
 def check_user_in_chatroom(chatroom_uuid: str, user_uuid: str, db: Session) -> bool:
-    exists_query = db.query(ChatroomRoles).where(ChatroomRoles.chatroom_uuid==chatroom_uuid and ChatroomRoles.user_uuid==user_uuid).exists()
+    exists_query = db.query(ChatroomRoles).where(ChatroomRoles.chatroom_uuid==chatroom_uuid).where(ChatroomRoles.user_uuid==user_uuid).exists()
     return db.query(exists_query).scalar()
 
 def ensure_user_in_chatroom(request: Request, chatroom_uuid: str, cookie: str, db: Session):
@@ -98,7 +98,7 @@ def change_chatroom_llm(request: Request, chatroom_uuid, chat_provider, chat_mod
 def get_rooms(request: Request, cookie, db: Session = Depends(get_db)):
     user_uuid = authentication_sdk.User(cookie, request.headers).profile()["user_uuid"]
     chatrooms = db.query(ChatroomRoles).where(ChatroomRoles.user_uuid==user_uuid).all()
-    return db.query(Chatrooms).where(ChatroomRoles.chatroom_uuid.in_([chatroom.chatroom_uuid for chatroom in chatrooms])).all()
+    return db.query(Chatrooms).where(Chatrooms.id.in_([chatroom.chatroom_uuid for chatroom in chatrooms])).all()
 
 """Enables the user to send a message in a chatroom"""
 @router.post('/message')
