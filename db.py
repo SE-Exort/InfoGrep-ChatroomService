@@ -79,5 +79,16 @@ class ChatroomMessages(Base):
     message = Column(String, nullable=False)
     references = Column(JSON)
 
+class ChatroomIntegration(str, enum.Enum):
+    Confluence = 'confluence'
+
+class ChatroomIntegrations(Base):
+    __tablename__ = 'chatroom_integrations'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, default=uuid.uuid4)
+    integration = Column(Enum(ChatroomIntegration), nullable=False)
+    chatroom_uuid = Column(UUID(as_uuid=True), nullable=False)
+    config = Column(JSON, nullable=False)
+
 # Create all tables in db
 Base.metadata.create_all(engine)

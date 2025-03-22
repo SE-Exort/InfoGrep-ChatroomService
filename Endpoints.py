@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request
+from fastapi import Body, FastAPI, APIRouter, HTTPException, Request
 from fastapi import UploadFile
 from fastapi.params import Depends
 from fastapi.responses import FileResponse
@@ -9,8 +9,9 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from InfoGrep_BackendSDK import authentication_sdk
 from InfoGrep_BackendSDK import fms_api
 from InfoGrep_BackendSDK import ai_sdk
-from db import ChatroomMessages, ChatroomRole, ChatroomRoles, Chatrooms, get_db
+from db import ChatroomIntegrations, ChatroomMessages, ChatroomRole, ChatroomRoles, Chatrooms, get_db
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 router = APIRouter(prefix='/api', tags=["api"])
 
@@ -67,7 +68,8 @@ def get_room(request: Request, chatroom_uuid, cookie, db: Session = Depends(get_
     ensure_user_in_chatroom(request, chatroom_uuid, cookie, db)
     chatroom = db.query(Chatrooms).where(Chatrooms.id==chatroom_uuid).one()
     chatroom_messages = db.query(ChatroomMessages).where(ChatroomMessages.chatroom_uuid==chatroom.id).all()
-    return {'list': chatroom_messages, 'embedding_model': chatroom.embedding_model, 'embedding_provider': chatroom.embedding_provider, 'chat_model': chatroom.chat_model, 'chat_provider': chatroom.chat_provider}
+    integrations = db.query(ChatroomIntegrations).where(ChatroomIntegrations.chatroom_uuid==chatroom_uuid).all()
+    return {'integrations': integrations, 'messages': chatroom_messages, 'embedding_model': chatroom.embedding_model, 'embedding_provider': chatroom.embedding_provider, 'chat_model': chatroom.chat_model, 'chat_provider': chatroom.chat_provider}
 
 """Update chatroom name or roles."""
 @router.put('/room')
@@ -134,6 +136,30 @@ def delete_message(request: Request, chatroom_uuid, message_uuid, cookie, db: Se
 def delete_messages(request: Request, chatroom_uuid, cookie, db: Session = Depends(get_db)):
     ensure_user_in_chatroom(request, chatroom_uuid, cookie, db)
     db.query(ChatroomMessages).where(ChatroomMessages.chatroom_uuid==chatroom_uuid).delete()
+
+class AddIntegrationParams(BaseModel):
+    chatroom_uuid: str
+    integration: str
+    config: dict
+    cookie: str
+
+@router.post('/integration')
+def add_integration(request: Request, p: AddIntegrationParams = Body(), db: Session = Depends(get_db)):
+    ensure_user_in_chatroom(request, p.chatroom_uuid, p.cookie, db)
+    integration = ChatroomIntegrations(integration=p.integration, chatroom_uuid=p.chatroom_uuid, config=p.config)
+    db.add(integration)
+    db.commit()
+
+class DeleteIntegrationParams(BaseModel):
+    integration_uuid: str
+    cookie: str
+
+@router.delete('/integration')
+def add_integration(request: Request, p: DeleteIntegrationParams = Body(), db: Session = Depends(get_db)):
+    integration = db.query(ChatroomIntegrations).where(ChatroomIntegrations.id==p.integration_uuid).one()
+    ensure_user_in_chatroom(request, integration.chatroom_uuid, p.cookie, db)
+    db.query(ChatroomIntegrations).where(ChatroomIntegrations.id==p.integration_uuid).delete()
+    db.commit()
 
 @router.get("/docs")
 async def custom_swagger_ui_html():
