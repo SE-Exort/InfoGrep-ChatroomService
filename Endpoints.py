@@ -1,9 +1,6 @@
-import uuid
 
-from fastapi import Body, FastAPI, APIRouter, HTTPException, Request
-from fastapi import UploadFile
+from fastapi import Body, APIRouter, HTTPException, Request
 from fastapi.params import Depends
-from fastapi.responses import FileResponse
 from fastapi.openapi.docs import get_swagger_ui_html
 
 from InfoGrep_BackendSDK import authentication_sdk
@@ -67,7 +64,7 @@ def delete_room(request: Request, chatroom_uuid, cookie, db: Session = Depends(g
 def get_room(request: Request, chatroom_uuid, cookie, db: Session = Depends(get_db)):
     ensure_user_in_chatroom(request, chatroom_uuid, cookie, db)
     chatroom = db.query(Chatrooms).where(Chatrooms.id==chatroom_uuid).one()
-    chatroom_messages = db.query(ChatroomMessages).where(ChatroomMessages.chatroom_uuid==chatroom.id).all()
+    chatroom_messages = db.query(ChatroomMessages).order_by(ChatroomMessages.timestamp).where(ChatroomMessages.chatroom_uuid==chatroom.id).all()
     integrations = db.query(ChatroomIntegrations).where(ChatroomIntegrations.chatroom_uuid==chatroom_uuid).all()
     return {'integrations': integrations, 'messages': chatroom_messages, 'embedding_model': chatroom.embedding_model, 'embedding_provider': chatroom.embedding_provider, 'chat_model': chatroom.chat_model, 'chat_provider': chatroom.chat_provider}
 
