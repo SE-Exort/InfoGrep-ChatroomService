@@ -90,5 +90,15 @@ class ChatroomIntegrations(Base):
     chatroom_uuid = Column(UUID(as_uuid=True), nullable=False)
     config = Column(JSON, nullable=False)
 
+class ChatroomWebhookType(str, enum.Enum):
+    UserSendMessage = 'user_send_message'
+
+class ChatroomWebhooks(Base):
+    __tablename__ = 'chatroom_webhooks'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, default=uuid.uuid4)
+    url = Column(String, nullable=False)
+    type = Column(Enum(ChatroomWebhookType), nullable=False)
+
 # Create all tables in db
 Base.metadata.create_all(engine)

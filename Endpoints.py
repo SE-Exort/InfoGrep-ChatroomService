@@ -2,11 +2,12 @@
 from fastapi import Body, APIRouter, HTTPException, Request
 from fastapi.params import Depends
 from fastapi.openapi.docs import get_swagger_ui_html
+import requests
 
 from InfoGrep_BackendSDK import authentication_sdk
 from InfoGrep_BackendSDK import fms_api
 from InfoGrep_BackendSDK import ai_sdk
-from db import ChatroomIntegrations, ChatroomMessages, ChatroomRole, ChatroomRoles, Chatrooms, get_db
+from db import ChatroomIntegrations, ChatroomMessages, ChatroomRole, ChatroomRoles, ChatroomWebhookType, ChatroomWebhooks, Chatrooms, get_db
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -102,8 +103,17 @@ def get_rooms(request: Request, cookie, db: Session = Depends(get_db)):
 def post_message(request: Request, chatroom_uuid, cookie, message, db: Session = Depends(get_db)):
     ensure_user_in_chatroom(request, chatroom_uuid, cookie, db)
     user_uuid = authentication_sdk.User(cookie, headers=request.headers).profile()["user_uuid"]
-    db.add(ChatroomMessages(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid, message=message))
+    message_obj = ChatroomMessages(chatroom_uuid=chatroom_uuid, user_uuid=user_uuid, message=message)
+    db.add(message_obj)
     db.commit()
+
+    # notify webhook
+    webhooks = db.query(ChatroomWebhooks).where(ChatroomWebhooks.type==ChatroomWebhookType.UserSendMessage).all()
+    for webhook in webhooks:
+        try:
+            requests.post(webhook.url, json={"message": message, "user": user_uuid, 'chatroom_uuid': chatroom_uuid, 'timestamp': str(message_obj.timestamp)})
+        except Exception as e:
+            print(e)
     
     # Fetch chatroom settings
     c = db.query(Chatrooms).where(Chatrooms.id==chatroom_uuid).one()
@@ -157,6 +167,34 @@ def add_integration(request: Request, p: DeleteIntegrationParams = Body(), db: S
     ensure_user_in_chatroom(request, integration.chatroom_uuid, p.cookie, db)
     db.query(ChatroomIntegrations).where(ChatroomIntegrations.id==p.integration_uuid).delete()
     db.commit()
+
+class AddWebhookParams(BaseModel):
+    url: str
+    type: str
+
+@router.post('/webhook')
+def add_webhook(request: Request, cookie: str, p: AddWebhookParams = Body(), db: Session = Depends(get_db)):
+    is_admin = authentication_sdk.User(cookie, headers=request.headers).profile()["is_admin"]
+    if not is_admin: raise HTTPException(status_code=400, detail='admin only')
+    webhook = ChatroomWebhooks(url=p.url, type=p.type)
+    db.add(webhook)
+    db.commit()
+
+class DeleteWebhookParams(BaseModel):
+    id: str
+
+@router.delete('/webhook')
+def delete_webhook(request: Request, cookie: str, p: DeleteWebhookParams = Body(), db: Session = Depends(get_db)):
+    is_admin = authentication_sdk.User(cookie, headers=request.headers).profile()["is_admin"]
+    if not is_admin: raise HTTPException(status_code=400, detail='admin only')
+    db.query(ChatroomWebhooks).where(ChatroomWebhooks.id==p.id).delete()
+    db.commit()
+
+@router.get('/webhooks')
+def add_webhook(request: Request, cookie: str, db: Session = Depends(get_db)):
+    is_admin = authentication_sdk.User(cookie, headers=request.headers).profile()["is_admin"]
+    if not is_admin: raise HTTPException(status_code=400, detail='admin only')
+    return db.query(ChatroomWebhooks).all()
 
 @router.get("/docs")
 async def custom_swagger_ui_html():
